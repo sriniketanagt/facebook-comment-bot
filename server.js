@@ -9,93 +9,67 @@ const VERIFY_TOKEN = "my_verify_token";
 
 const PAGE_ACCESS_TOKEN = "EAANzZBcUsXkwBRVk5TAhtpCwTrfJpKmMYNnxl8pJuLI1Olk3iuoxTstZBm54el4OPyneNzyNSlApq3d04k6tQ0tNR0sfkQCPTdxo6kfZCWoywGvs56ZAProhVBKhalGEbscM1dfXDVt0FMSqOaRQ3j0OmKMnW19bv2NCPdCeq4KKdwgpATZBd4wCzDGVusCZBZCpunqNAZDZD";
 
-
-
-// VERIFY WEBHOOK
+// Webhook verification
 app.get("/webhook", (req, res) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
 
-    const mode = req.query["hub.mode"];
-    const token = req.query["hub.verify_token"];
-    const challenge = req.query["hub.challenge"];
-
-    if (mode && token) {
-
-        if (mode === "subscribe" && token === VERIFY_TOKEN) {
-
-            console.log("WEBHOOK VERIFIED");
-            res.status(200).send(challenge);
-
-        } else {
-
-            res.sendStatus(403);
-        }
+  if (mode && token) {
+    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+      console.log("WEBHOOK VERIFIED");
+      return res.status(200).send(challenge);
+    } else {
+      return res.sendStatus(403);
     }
+  }
 });
 
-
-
-// RECEIVE EVENTS
+// Receive webhook events
 app.post("/webhook", async (req, res) => {
+  console.log("NEW FACEBOOK EVENT RECEIVED");
 
-    console.log("=================================");
-    console.log("NEW FACEBOOK EVENT RECEIVED");
+  try {
+    const entry = req.body.entry?.[0];
+    const change = entry?.changes?.[0];
+    const value = change?.value;
 
-    try {
+    console.log(value);
 
-        const entry = req.body.entry?.[0];
-        const changes = entry?.changes?.[0];
+    // Detect new comments
+    if (value?.item === "comment" && value?.verb === "add") {
 
-        if (changes?.field === "feed") {
+      const commentId = value.comment_id;
 
-            const value = changes.value;
+      console.log("COMMENT ID:", commentId);
 
-            console.log(value);
-
-            // COMMENT EVENT
-            if (value.item === "comment") {
-
-                const commentId = value.comment_id;
-
-                console.log("COMMENT ID:", commentId);
-
-                // SEND AUTO REPLY
-                const response = await axios.post(
-                    `https://graph.facebook.com/v25.0/${commentId}/comments`,
-                    {
-                        message: "Thank you for your comment kindly check inbox ❤️"
-                    },
-                    {
-                        params: {
-                            access_token: PAGE_ACCESS_TOKEN
-                        }
-                    }
-                );
-
-                console.log("AUTO REPLY SENT");
-                console.log(response.data);
-            }
+      // Reply to comment
+      await axios.post(
+        `https://graph.facebook.com/v25.0/${commentId}/comments`,
+        {
+          message: "Thanks for your comment ❤️"
+        },
+        {
+          params: {
+            access_token: PAGE_ACCESS_TOKEN
+          }
         }
+      );
 
-        res.status(200).send("EVENT_RECEIVED");
-
-    } catch (error) {
-
-        console.log("ERROR:");
-
-        if (error.response) {
-            console.log(error.response.data);
-        } else {
-            console.log(error.message);
-        }
-
-        res.sendStatus(500);
+      console.log("AUTO REPLY SENT");
     }
+
+    res.sendStatus(200);
+
+  } catch (error) {
+    console.log("ERROR:");
+    console.log(error.response?.data || error.message);
+    res.sendStatus(200);
+  }
 });
-
-
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
