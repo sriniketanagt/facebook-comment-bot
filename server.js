@@ -11,7 +11,7 @@ const PAGE_ACCESS_TOKEN =
   "EAAc4cUMHMhIBRRokcoIEmwUPsSO3r3ziLigi9dsd9IXwY5LPwLlr3XMXAefflOXlFHCl8pCRjJPd3rRjepLrYplTRQKQhvunNwy95XOvoSbby72WWPWuzakreWI9WghshqVEb6ZBVRhJosUrXfqaMrQ19TaVauMTqyrdZAZB4jYlt41ujhEtNPPn0ieXX8mErBOP1SWtakm3Ba5Ujg1kZAFiImm72AhyyC8EUEjZCI0c0yZBX9rVItPpnhoZAxAQbPlUltel9JD02h73QgsVurV";
 
 app.get("/", (req, res) => {
-  res.send("Facebook Bot Running");
+  res.send("Facebook Auto Reply Bot Running");
 });
 
 app.get("/webhook", (req, res) => {
@@ -22,7 +22,10 @@ app.get("/webhook", (req, res) => {
 
   console.log("VERIFY REQUEST:", req.query);
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+  if (
+    mode === "subscribe" &&
+    token === VERIFY_TOKEN
+  ) {
 
     console.log("WEBHOOK VERIFIED");
 
@@ -60,17 +63,15 @@ app.post("/webhook", async (req, res) => {
 
               console.log("COMMENT ID:", commentId);
 
-              console.log("SENDING AUTO REPLY...");
+              console.log("SENDING PRIVATE REPLY...");
 
               const response = await axios.post(
-                `https://graph.facebook.com/v25.0/${commentId}/comments`,
+                `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
                 {
-                  message: "Thank you for your comment ❤️"
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${PAGE_ACCESS_TOKEN}`
-                  }
+                  message:
+                    "Thank you for your comment ❤️",
+                  access_token:
+                    PAGE_ACCESS_TOKEN
                 }
               );
 
@@ -79,7 +80,9 @@ app.post("/webhook", async (req, res) => {
                 response.data
               );
 
-              console.log("AUTO REPLY SENT SUCCESSFULLY");
+              console.log(
+                "PRIVATE REPLY SENT SUCCESSFULLY"
+              );
             }
           }
         }
@@ -90,12 +93,17 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
-    console.log("ERROR:");
+    console.log("ERROR SENDING PRIVATE REPLY");
 
     if (err.response) {
 
       console.log(
-        JSON.stringify(err.response.data, null, 2)
+        "FACEBOOK ERROR:",
+        JSON.stringify(
+          err.response.data,
+          null,
+          2
+        )
       );
 
     } else {
@@ -107,9 +115,12 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 10000;
+const PORT =
+  process.env.PORT || 10000;
 
 app.listen(PORT, () => {
 
-  console.log(`SERVER RUNNING ON PORT ${PORT}`);
+  console.log(
+    `SERVER RUNNING ON PORT ${PORT}`
+  );
 });
