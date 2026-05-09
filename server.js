@@ -8,7 +8,7 @@ app.use(express.json());
 const VERIFY_TOKEN = "myverifytoken";
 
 const PAGE_ACCESS_TOKEN =
-"EAAc4cUMHMhIBRTITiHBVXsz2ZAMD54mM9g1SjNanZA5eGBUYNaBlIVGNOg9UMtZAX72WEnwDTCfW3LlQZAYXr1ZA7XeoovITNgPQyEolWfEQWsf4Ec2k7qckbXFsaa1GUlT440Ll1PcDFGSX4wvAzA8BZCAZCD26Sj342OsFZBezNCR1ZAK5hxw47QNI0ZAxcgMNCyYI0ZAjgZDZD";
+  "EAAc4cUMHMhIBRTITiHBVXsz2ZAMD54mM9g1SjNanZA5eGBUYNaBlIVGNOg9UMtZAX72WEnwDTCfW3LlQZAYXr1ZA7XeoovITNgPQyEolWfEQWsf4Ec2k7qckbXFsaa1GUlT440Ll1PcDFGSX4wvAzA8BZCAZCD26Sj342OsFZBezNCR1ZAK5hxw47QNI0ZAxcgMNCyYI0ZAjgZDZD";
 
 app.get("/", (req, res) => {
   res.send("Facebook Bot Running");
@@ -20,11 +20,11 @@ app.get("/webhook", (req, res) => {
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
-  console.log("VERIFY REQUEST:", req.query);
+  console.log("VERIFY WEBHOOK:", req.query);
 
-  if (mode && token === VERIFY_TOKEN) {
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
 
-    console.log("WEBHOOK VERIFIED");
+    console.log("WEBHOOK VERIFIED SUCCESSFULLY");
 
     return res.status(200).send(challenge);
   }
@@ -60,17 +60,21 @@ app.post("/webhook", async (req, res) => {
 
               console.log("COMMENT ID:", commentId);
 
-              await axios.post(
+              console.log("SENDING PRIVATE REPLY...");
+
+              const response = await axios.post(
                 `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
                 {
                   message: "Thank you for your comment ❤️"
                 },
                 {
-                  params: {
-                    access_token: PAGE_ACCESS_TOKEN
+                  headers: {
+                    Authorization: `Bearer ${PAGE_ACCESS_TOKEN}`
                   }
                 }
               );
+
+              console.log("FACEBOOK RESPONSE:", response.data);
 
               console.log("PRIVATE AUTO REPLY SENT");
             }
@@ -79,24 +83,31 @@ app.post("/webhook", async (req, res) => {
       }
     }
 
-    res.sendStatus(200);
+    return res.sendStatus(200);
 
   } catch (err) {
 
-    console.log("ERROR:");
+    console.log("ERROR SENDING PRIVATE REPLY");
 
     if (err.response) {
-      console.log(err.response.data);
+
+      console.log(
+        "FACEBOOK ERROR:",
+        JSON.stringify(err.response.data, null, 2)
+      );
+
     } else {
+
       console.log(err.message);
     }
 
-    res.sendStatus(500);
+    return res.sendStatus(500);
   }
 });
 
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+  console.log(`SERVER RUNNING ON PORT ${PORT}`);
 });
