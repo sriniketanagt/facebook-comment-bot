@@ -3,13 +3,15 @@ const bodyParser = require("body-parser");
 const axios = require("axios");
 
 const app = express();
+
 app.use(bodyParser.json());
 
 const VERIFY_TOKEN = "my_verify_token";
 
-const PAGE_ACCESS_TOKEN = "EAANzZBcUsXkwBRVk5TAhtpCwTrfJpKmMYNnxl8pJuLI1Olk3iuoxTstZBm54el4OPyneNzyNSlApq3d04k6tQ0tNR0sfkQCPTdxo6kfZCWoywGvs56ZAProhVBKhalGEbscM1dfXDVt0FMSqOaRQ3j0OmKMnW19bv2NCPdCeq4KKdwgpATZBd4wCzDGVusCZBZCpunqNAZDZD";
+const PAGE_ACCESS_TOKEN =
+  "EAANzZBcUsXkwBRVk5TAhtpCwTrfJpKmMYNnxl8pJuLI1Olk3iuoxTstZBm54el4OPyneNzyNSlApq3d04k6tQ0tNR0sfkQCPTdxo6kfZCWoywGvs56ZAProhVBKhalGEbscM1dfXDVt0FMSqOaRQ3j0OmKMnW19bv2NCPdCeq4KKdwgpATZBd4wCzDGVusCZBZCpunqNAZDZD";
 
-// Webhook verification
+// WEBHOOK VERIFICATION
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
@@ -25,7 +27,7 @@ app.get("/webhook", (req, res) => {
   }
 });
 
-// Receive webhook events
+// RECEIVE EVENTS
 app.post("/webhook", async (req, res) => {
   console.log("NEW FACEBOOK EVENT RECEIVED");
 
@@ -36,16 +38,16 @@ app.post("/webhook", async (req, res) => {
 
     console.log(value);
 
-    // Detect new comments
+    // NEW COMMENT DETECTED
     if (value?.item === "comment" && value?.verb === "add") {
 
       const commentId = value.comment_id;
 
       console.log("COMMENT ID:", commentId);
 
-      // Reply to comment
-      await axios.post(
-        `https://graph.facebook.com/v25.0/${commentId}/comments`,
+      // SEND PRIVATE REPLY
+      const response = await axios.post(
+        `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
         {
           message: "Thanks for your comment ❤️"
         },
@@ -57,13 +59,21 @@ app.post("/webhook", async (req, res) => {
       );
 
       console.log("AUTO REPLY SENT");
+      console.log(response.data);
     }
 
     res.sendStatus(200);
 
   } catch (error) {
+
     console.log("ERROR:");
-    console.log(error.response?.data || error.message);
+
+    if (error.response) {
+      console.log(error.response.data);
+    } else {
+      console.log(error.message);
+    }
+
     res.sendStatus(200);
   }
 });
