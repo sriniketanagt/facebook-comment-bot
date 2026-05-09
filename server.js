@@ -7,29 +7,29 @@ app.use(bodyParser.json());
 
 const VERIFY_TOKEN = "my_verify_token";
 
-/*
-PASTE YOUR PAGE ACCESS TOKEN HERE
-*/
-const PAGE_ACCESS_TOKEN = "PASTE_YOUR_PAGE_ACCESS_TOKEN";
+const PAGE_ACCESS_TOKEN = "EAANzZBcUsXkwBRVk5TAhtpCwTrfJpKmMYNnxl8pJuLI1Olk3iuoxTstZBm54el4OPyneNzyNSlApq3d04k6tQ0tNR0sfkQCPTdxo6kfZCWoywGvs56ZAProhVBKhalGEbscM1dfXDVt0FMSqOaRQ3j0OmKMnW19bv2NCPdCeq4KKdwgpATZBd4wCzDGVusCZBZCpunqNAZDZD";
 
 
-// WEBHOOK VERIFICATION
+
+// VERIFY WEBHOOK
 app.get("/webhook", (req, res) => {
 
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
 
-  if (mode && token) {
+    if (mode && token) {
 
-    if (mode === "subscribe" && token === VERIFY_TOKEN) {
-      console.log("WEBHOOK VERIFIED");
-      res.status(200).send(challenge);
+        if (mode === "subscribe" && token === VERIFY_TOKEN) {
 
-    } else {
-      res.sendStatus(403);
+            console.log("WEBHOOK VERIFIED");
+            res.status(200).send(challenge);
+
+        } else {
+
+            res.sendStatus(403);
+        }
     }
-  }
 });
 
 
@@ -37,54 +37,59 @@ app.get("/webhook", (req, res) => {
 // RECEIVE EVENTS
 app.post("/webhook", async (req, res) => {
 
-  console.log("NEW FACEBOOK EVENT RECEIVED");
+    console.log("=================================");
+    console.log("NEW FACEBOOK EVENT RECEIVED");
 
-  try {
+    try {
 
-    const entry = req.body.entry?.[0];
-    const changes = entry?.changes?.[0];
+        const entry = req.body.entry?.[0];
+        const changes = entry?.changes?.[0];
 
-    if (changes?.field === "feed") {
+        if (changes?.field === "feed") {
 
-      const value = changes.value;
+            const value = changes.value;
 
-      console.log(value);
+            console.log(value);
 
-      // NEW COMMENT DETECTED
-      if (value.item === "comment") {
+            // COMMENT EVENT
+            if (value.item === "comment") {
 
-        const commentId = value.comment_id;
+                const commentId = value.comment_id;
 
-        console.log("COMMENT ID:", commentId);
+                console.log("COMMENT ID:", commentId);
 
-        // AUTO REPLY
-        await axios.post(
+                // SEND AUTO REPLY
+                const response = await axios.post(
+                    `https://graph.facebook.com/v25.0/${commentId}/comments`,
+                    {
+                        message: "Thank you for your comment kindly check inbox ❤️"
+                    },
+                    {
+                        params: {
+                            access_token: PAGE_ACCESS_TOKEN
+                        }
+                    }
+                );
 
-          `https://graph.facebook.com/v25.0/${commentId}/comments`,
-          {
-            message: "Thank you for your comment kindly check inbox ❤️"
-          },
-          {
-            params: {
-              access_token: EAANzZBcUsXkwBRTW97dPeDBkdMCKVZA1om7eaFutuZArSPfb7NtcQTnK3ahBfYZBzgWp7dnFriwn9Em7ZBGg8GVHs58fZCn4jDrHg4sKlx7pCZBMfBu69ePmuZBzpqUwLbXiUwlLZCWmp5qAXTPTfFQpvLE5p5s7iB6BDU0ONPaPBN67Bd1mxh2ZCytY3KYy3niHWlPzBMoAZDZD
+                console.log("AUTO REPLY SENT");
+                console.log(response.data);
             }
-          }
+        }
 
-        );
+        res.status(200).send("EVENT_RECEIVED");
 
-        console.log("AUTO REPLY SENT");
-      }
+    } catch (error) {
+
+        console.log("ERROR:");
+
+        if (error.response) {
+            console.log(error.response.data);
+        } else {
+            console.log(error.message);
+        }
+
+        res.sendStatus(500);
     }
-
-    res.status(200).send("EVENT_RECEIVED");
-
-  } catch (error) {
-
-    console.log("ERROR:");
-    console.log(error.response?.data || error.message);
-
-    res.sendStatus(500);
-  }
 });
 
 
@@ -92,5 +97,5 @@ app.post("/webhook", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
