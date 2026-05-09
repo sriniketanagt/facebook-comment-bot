@@ -8,7 +8,7 @@ app.use(express.json());
 const VERIFY_TOKEN = "myverifytoken";
 
 const PAGE_ACCESS_TOKEN =
-  "EAAc4cUMHMhIBRTITiHBVXsz2ZAMD54mM9g1SjNanZA5eGBUYNaBlIVGNOg9UMtZAX72WEnwDTCfW3LlQZAYXr1ZA7XeoovITNgPQyEolWfEQWsf4Ec2k7qckbXFsaa1GUlT440Ll1PcDFGSX4wvAzA8BZCAZCD26Sj342OsFZBezNCR1ZAK5hxw47QNI0ZAxcgMNCyYI0ZAjgZDZD";
+  "EAAc4cUMHMhIBRRokcoIEmwUPsSO3r3ziLigi9dsd9IXwY5LPwLlr3XMXAefflOXlFHCl8pCRjJPd3rRjepLrYplTRQKQhvunNwy95XOvoSbby72WWPWuzakreWI9WghshqVEb6ZBVRhJosUrXfqaMrQ19TaVauMTqyrdZAZB4jYlt41ujhEtNPPn0ieXX8mErBOP1SWtakm3Ba5Ujg1kZAFiImm72AhyyC8EUEjZCI0c0yZBX9rVItPpnhoZAxAQbPlUltel9JD02h73QgsVurV";
 
 app.get("/", (req, res) => {
   res.send("Facebook Bot Running");
