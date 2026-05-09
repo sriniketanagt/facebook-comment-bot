@@ -59,21 +59,42 @@ app.post("/webhook", async (req, res) => {
               value.verb === "add"
             ) {
 
-              const commentId = value.comment_id;
+              let commentId = value.comment_id;
 
-              console.log("COMMENT ID:", commentId);
-
-              console.log("SENDING PRIVATE REPLY...");
-
-              const response = await axios.post(
-                `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
-                {
-                  message:
-                    "Thank you for your comment ❤️",
-                  access_token:
-                    PAGE_ACCESS_TOKEN
-                }
+              console.log(
+                "FULL COMMENT ID:",
+                commentId
               );
+
+              // Facebook sends combined IDs
+              // Example:
+              // 1400531292095331_1597157325743333
+
+              if (commentId.includes("_")) {
+
+                commentId =
+                  commentId.split("_")[1];
+              }
+
+              console.log(
+                "FINAL COMMENT ID:",
+                commentId
+              );
+
+              console.log(
+                "SENDING PRIVATE REPLY..."
+              );
+
+              const response =
+                await axios.post(
+                  `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
+                  {
+                    message:
+                      "Thank you for your comment ❤️",
+                    access_token:
+                      PAGE_ACCESS_TOKEN
+                  }
+                );
 
               console.log(
                 "FACEBOOK RESPONSE:",
@@ -93,7 +114,9 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
-    console.log("ERROR SENDING PRIVATE REPLY");
+    console.log(
+      "ERROR SENDING PRIVATE REPLY"
+    );
 
     if (err.response) {
 
