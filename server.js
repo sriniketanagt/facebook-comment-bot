@@ -7,7 +7,7 @@ app.use(express.json());
 const VERIFY_TOKEN = "myverifytoken";
 
 const PAGE_ACCESS_TOKEN =
-"PASTE_YOUR_NEW_PAGE_ACCESS_TOKEN_HERE";
+"EAAc4cUMHMhIBRWpz578NCHnGiPUEDoef2iaTNQlI6hpcDwUzcJbVCP81XArjBWI0dwof57bh7JtYuRbgBz1g8rXpBg5baEJlIroQJ24iJ7NCa6ucqSOVzPYmA6tkKcnZCX0AeG2ZBYQA3vraLc978qz9PXIHTdvzkguUFP0fqj5xQPIZB8P61rsmlLQLnCTlRxWIAZDZD";
 
 app.get("/", (req, res) => {
   res.send("Bot Running");
