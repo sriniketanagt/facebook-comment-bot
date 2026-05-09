@@ -47,16 +47,16 @@ app.post("/webhook", async (req, res) => {
               console.log("COMMENT ID:", commentId);
 
               await axios.post(
-                `https://graph.facebook.com/v25.0/${commentId}/comments`,
-                {
-                  message: "Thank you for your comment ❤️"
-                },
-                {
-                  params: {
-                    access_token: PAGE_ACCESS_TOKEN
-                  }
-                }
-              );
+  `https://graph.facebook.com/v25.0/${value.post_id}/comments`,
+  {
+    message: `@${value.from.name} Thank you for your comment ❤️`
+  },
+  {
+    params: {
+      access_token: PAGE_ACCESS_TOKEN
+    }
+  }
+);
 
               console.log("AUTO REPLIED");
             }
