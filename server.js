@@ -11,7 +11,7 @@ const PAGE_ACCESS_TOKEN =
 "EAAc4cUMHMhIBRTITiHBVXsz2ZAMD54mM9g1SjNanZA5eGBUYNaBlIVGNOg9UMtZAX72WEnwDTCfW3LlQZAYXr1ZA7XeoovITNgPQyEolWfEQWsf4Ec2k7qckbXFsaa1GUlT440Ll1PcDFGSX4wvAzA8BZCAZCD26Sj342OsFZBezNCR1ZAK5hxw47QNI0ZAxcgMNCyYI0ZAjgZDZD";
 
 app.get("/", (req, res) => {
-  res.send("Facebook Comment Bot Running");
+  res.send("Facebook Bot Running");
 });
 
 app.get("/webhook", (req, res) => {
@@ -63,8 +63,7 @@ app.post("/webhook", async (req, res) => {
               await axios.post(
                 `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
                 {
-                  message:
-                    `Thank you for your comment ❤️`
+                  message: "Thank you for your comment ❤️"
                 },
                 {
                   params: {
