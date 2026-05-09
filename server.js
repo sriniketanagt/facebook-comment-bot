@@ -8,7 +8,7 @@ app.use(express.json());
 const VERIFY_TOKEN = "myverifytoken";
 
 const PAGE_ACCESS_TOKEN =
-  "EAAc4cUMHMhIBRRokcoIEmwUPsSO3r3ziLigi9dsd9IXwY5LPwLlr3XMXAefflOXlFHCl8pCRjJPd3rRjepLrYplTRQKQhvunNwy95XOvoSbby72WWPWuzakreWI9WghshqVEb6ZBVRhJosUrXfqaMrQ19TaVauMTqyrdZAZB4jYlt41ujhEtNPPn0ieXX8mErBOP1SWtakm3Ba5Ujg1kZAFiImm72AhyyC8EUEjZCI0c0yZBX9rVItPpnhoZAxAQbPlUltel9JD02h73QgsVurV";
+  "EAAc4cUMHMhIBRfvicusptZB9bLty2sHx9MaXMZCO7BsfH5XxMiEhYCCck0aG4EbnfV16HksYmfcN89fgWMYYFluVLeIsaZAgFDS3UsikGs0xVOq6pVMQnyPx6aoIZAVgEaSJmKKYDdZCnHo6eWSZBqV8Ug2rg6lZAMHoVuqoBtxVXyENajbvEK4d2ctXthqzjfRROzEksnc0OZCsaaouHF5jmAfE8ghug6cdXl151K5uf5C5JAo5h3hhL97nMWeEjgYe2onJRFu4bgnhDpldQL5M";
 
 app.get("/", (req, res) => {
   res.send("Facebook Auto Reply Bot Running");
