@@ -1,3 +1,5 @@
+"use strict";
+
 const express = require("express");
 const axios = require("axios");
 
@@ -7,139 +9,234 @@ app.use(express.json());
 
 const VERIFY_TOKEN = "myverifytoken";
 
+const PAGE_ID =
+  "524548834272410";
+
 const PAGE_ACCESS_TOKEN =
   "EAAc4cUMHMhIBRfvicusptZB9bLty2sHx9MaXMZCO7BsfH5XxMiEhYCCck0aG4EbnfV16HksYmfcN89fgWMYYFluVLeIsaZAgFDS3UsikGs0xVOq6pVMQnyPx6aoIZAVgEaSJmKKYDdZCnHo6eWSZBqV8Ug2rg6lZAMHoVuqoBtxVXyENajbvEK4d2ctXthqzjfRROzEksnc0OZCsaaouHF5jmAfE8ghug6cdXl151K5uf5C5JAo5h3hhL97nMWeEjgYe2onJRFu4bgnhDpldQL5M";
 
-app.get("/", (req, res) => {
-  res.send("Facebook Auto Reply Bot Running");
+const GRAPH_API_VERSION = "v25.0";
+
+const PRIVATE_REPLY_MESSAGE =
+  "Thank you for your comment.";
+
+const PORT = 10000;
+
+const repliedComments = new Set();
+
+app.get("/", (_req, res) => {
+
+  res.send(
+    "Facebook Auto Reply Bot Running"
+  );
 });
 
 app.get("/webhook", (req, res) => {
 
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
+  const mode =
+    req.query["hub.mode"];
 
-  console.log("VERIFY REQUEST:", req.query);
+  const token =
+    req.query["hub.verify_token"];
+
+  const challenge =
+    req.query["hub.challenge"];
+
+  console.log(
+    "VERIFY REQUEST:",
+    req.query
+  );
 
   if (
     mode === "subscribe" &&
     token === VERIFY_TOKEN
   ) {
 
-    console.log("WEBHOOK VERIFIED");
+    console.log(
+      "WEBHOOK VERIFIED"
+    );
 
-    return res.status(200).send(challenge);
+    return res
+      .status(200)
+      .send(challenge);
   }
 
   return res.sendStatus(403);
 });
 
-app.post("/webhook", async (req, res) => {
+async function sendPrivateReply(
+  pageId,
+  commentId
+) {
 
-  console.log(
-    "NEW FACEBOOK EVENT:",
-    JSON.stringify(req.body, null, 2)
-  );
+  const url =
+    `https://graph.facebook.com/${GRAPH_API_VERSION}/${pageId}/messages`;
 
-  try {
-
-    if (req.body.object === "page") {
-
-      for (const entry of req.body.entry) {
-
-        for (const change of entry.changes || []) {
-
-          if (change.field === "feed") {
-
-            const value = change.value;
-
-            if (
-              value.item === "comment" &&
-              value.verb === "add"
-            ) {
-
-              let commentId = value.comment_id;
-
-              console.log(
-                "FULL COMMENT ID:",
-                commentId
-              );
-
-              // Facebook sends combined IDs
-              // Example:
-              // 1400531292095331_1597157325743333
-
-              if (commentId.includes("_")) {
-
-                commentId =
-                  commentId.split("_")[1];
-              }
-
-              console.log(
-                "FINAL COMMENT ID:",
-                commentId
-              );
-
-              console.log(
-                "SENDING PRIVATE REPLY..."
-              );
-
-              const response =
-                await axios.post(
-                  `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
-                  {
-                    message:
-                      "Thank you for your comment ❤️",
-                    access_token:
-                      PAGE_ACCESS_TOKEN
-                  }
-                );
-
-              console.log(
-                "FACEBOOK RESPONSE:",
-                response.data
-              );
-
-              console.log(
-                "PRIVATE REPLY SENT SUCCESSFULLY"
-              );
-            }
-          }
+  const response =
+    await axios.post(
+      url,
+      {
+        recipient: {
+          comment_id:
+            commentId
+        },
+        message: {
+          text:
+            PRIVATE_REPLY_MESSAGE
+        }
+      },
+      {
+        headers: {
+          Authorization:
+            `Bearer ${PAGE_ACCESS_TOKEN}`,
+          "Content-Type":
+            "application/json"
         }
       }
-    }
-
-    return res.sendStatus(200);
-
-  } catch (err) {
-
-    console.log(
-      "ERROR SENDING PRIVATE REPLY"
     );
 
-    if (err.response) {
+  return response.data;
+}
+
+app.post(
+  "/webhook",
+  async (req, res) => {
+
+    console.log(
+      "NEW FACEBOOK EVENT:",
+      JSON.stringify(
+        req.body,
+        null,
+        2
+      )
+    );
+
+    res.sendStatus(200);
+
+    try {
+
+      if (
+        req.body.object !== "page"
+      ) {
+        return;
+      }
+
+      for (
+        const entry of
+        req.body.entry || []
+      ) {
+
+        const pageId =
+          entry.id || PAGE_ID;
+
+        for (
+          const change of
+          entry.changes || []
+        ) {
+
+          const value =
+            change.value || {};
+
+          if (
+            change.field !==
+              "feed" ||
+            value.item !==
+              "comment" ||
+            value.verb !==
+              "add" ||
+            !value.comment_id
+          ) {
+            continue;
+          }
+
+          const commentId =
+            value.comment_id;
+
+          const commenterId =
+            value.from?.id ||
+            value.sender_id;
+
+          console.log(
+            "COMMENT ID:",
+            commentId
+          );
+
+          if (
+            commenterId ===
+            pageId
+          ) {
+
+            console.log(
+              "SKIPPED: PAGE COMMENT"
+            );
+
+            continue;
+          }
+
+          if (
+            repliedComments.has(
+              commentId
+            )
+          ) {
+
+            console.log(
+              "SKIPPED: ALREADY REPLIED"
+            );
+
+            continue;
+          }
+
+          console.log(
+            "SENDING PRIVATE REPLY..."
+          );
+
+          const fbResponse =
+            await sendPrivateReply(
+              pageId,
+              commentId
+            );
+
+          repliedComments.add(
+            commentId
+          );
+
+          console.log(
+            "FACEBOOK RESPONSE:",
+            fbResponse
+          );
+
+          console.log(
+            "PRIVATE REPLY SENT SUCCESSFULLY"
+          );
+        }
+      }
+
+    } catch (err) {
 
       console.log(
-        "FACEBOOK ERROR:",
-        JSON.stringify(
-          err.response.data,
-          null,
-          2
-        )
+        "ERROR SENDING PRIVATE REPLY"
       );
 
-    } else {
+      if (err.response) {
 
-      console.log(err.message);
+        console.log(
+          "FACEBOOK ERROR:",
+          JSON.stringify(
+            err.response.data,
+            null,
+            2
+          )
+        );
+
+      } else {
+
+        console.log(
+          err.message
+        );
+      }
     }
-
-    return res.sendStatus(500);
   }
-});
-
-const PORT =
-  process.env.PORT || 10000;
+);
 
 app.listen(PORT, () => {
 
