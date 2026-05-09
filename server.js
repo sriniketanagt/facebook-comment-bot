@@ -66,7 +66,7 @@ app.post("/webhook", async (req, res) => {
           },
           {
             params: {
-              access_token: PAGE_ACCESS_TOKEN
+              access_token: EAANzZBcUsXkwBRTW97dPeDBkdMCKVZA1om7eaFutuZArSPfb7NtcQTnK3ahBfYZBzgWp7dnFriwn9Em7ZBGg8GVHs58fZCn4jDrHg4sKlx7pCZBMfBu69ePmuZBzpqUwLbXiUwlLZCWmp5qAXTPTfFQpvLE5p5s7iB6BDU0ONPaPBN67Bd1mxh2ZCytY3KYy3niHWlPzBMoAZDZD
             }
           }
 
