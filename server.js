@@ -3,80 +3,80 @@ const bodyParser = require("body-parser");
 const axios = require("axios");
 
 const app = express();
-
 app.use(bodyParser.json());
 
 const VERIFY_TOKEN = "my_verify_token";
 
-const PAGE_ACCESS_TOKEN =
-  "EAANzZBcUsXkwBRVk5TAhtpCwTrfJpKmMYNnxl8pJuLI1Olk3iuoxTstZBm54el4OPyneNzyNSlApq3d04k6tQ0tNR0sfkQCPTdxo6kfZCWoywGvs56ZAProhVBKhalGEbscM1dfXDVt0FMSqOaRQ3j0OmKMnW19bv2NCPdCeq4KKdwgpATZBd4wCzDGVusCZBZCpunqNAZDZD";
+/* PASTE YOUR NEW PAGE TOKEN BELOW */
+const PAGE_ACCESS_TOKEN = "EAAX2v9peWNoBRYn01cWmKU3FpldaTOOWhswv2YNoUAww9ZB92DuJ9cEZBEZAE785eAQZBXXO0UA2jVfLNpZBdKamT4jRrn9E9ySZAbwCHDZCVFxTF3QMZBHHiG8LdZC45tSnZAG3MvS6LZA6snmnjygsbdT2Ek3gmL2gao0qvWemKZCrFOjLIetHZB83QMhyg8GfcZByw9lh9oWwZDZD";
 
-// VERIFY WEBHOOK
+/* WEBHOOK VERIFY */
 app.get("/webhook", (req, res) => {
-
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
   if (mode && token) {
-
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
-
       console.log("WEBHOOK VERIFIED");
-
-      return res.status(200).send(challenge);
-
+      res.status(200).send(challenge);
     } else {
-
-      return res.sendStatus(403);
+      res.sendStatus(403);
     }
   }
 });
 
-// RECEIVE EVENTS
+/* RECEIVE EVENTS */
 app.post("/webhook", async (req, res) => {
-
-  console.log("NEW FACEBOOK EVENT");
+  console.log("NEW FACEBOOK EVENT RECEIVED");
 
   try {
+    const body = req.body;
 
-    const entry = req.body.entry?.[0];
-    const change = entry?.changes?.[0];
-    const value = change?.value;
+    if (body.object === "page") {
+      body.entry.forEach(async (entry) => {
+        const changes = entry.changes;
 
-    console.log(value);
+        if (changes) {
+          changes.forEach(async (change) => {
 
-    // NEW COMMENT
-    if (value?.item === "comment" && value?.verb === "add") {
+            if (
+              change.field === "feed" &&
+              change.value.item === "comment" &&
+              change.value.verb === "add"
+            ) {
 
-      const parentId = value.parent_id;
+              console.log("COMMENT RECEIVED");
 
-      console.log("PARENT ID:", parentId);
+              const commentId = change.value.comment_id;
 
-      // REPLY TO COMMENT
-      const response = await axios.post(
+              console.log("COMMENT ID:", commentId);
 
-        `https://graph.facebook.com/v25.0/${parentId}/comments`,
+              await axios.post(
+                `https://graph.facebook.com/v25.0/${commentId}/comments`,
+                {
+                  message: "Thanks for your comment ❤️"
+                },
+                {
+                  params: {
+                    access_token: PAGE_ACCESS_TOKEN
+                  }
+                }
+              );
 
-        {
-          message: "Thanks for your comment ❤️"
-        },
-
-        {
-          params: {
-            access_token: PAGE_ACCESS_TOKEN
-          }
+              console.log("AUTO REPLIED SUCCESSFULLY");
+            }
+          });
         }
-      );
+      });
 
-      console.log("REPLY SENT");
-      console.log(response.data);
+      res.status(200).send("EVENT_RECEIVED");
+
+    } else {
+      res.sendStatus(404);
     }
 
-    res.sendStatus(200);
-
   } catch (error) {
-
     console.log("ERROR:");
 
     if (error.response) {
@@ -85,14 +85,12 @@ app.post("/webhook", async (req, res) => {
       console.log(error.message);
     }
 
-    res.sendStatus(200);
+    res.sendStatus(500);
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
-
   console.log(`Server running on port ${PORT}`);
-
 });
