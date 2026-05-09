@@ -11,17 +11,23 @@ const VERIFY_TOKEN = "my_verify_token";
 const PAGE_ACCESS_TOKEN =
   "EAANzZBcUsXkwBRVk5TAhtpCwTrfJpKmMYNnxl8pJuLI1Olk3iuoxTstZBm54el4OPyneNzyNSlApq3d04k6tQ0tNR0sfkQCPTdxo6kfZCWoywGvs56ZAProhVBKhalGEbscM1dfXDVt0FMSqOaRQ3j0OmKMnW19bv2NCPdCeq4KKdwgpATZBd4wCzDGVusCZBZCpunqNAZDZD";
 
-// WEBHOOK VERIFICATION
+// VERIFY WEBHOOK
 app.get("/webhook", (req, res) => {
+
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
   if (mode && token) {
+
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
+
       console.log("WEBHOOK VERIFIED");
+
       return res.status(200).send(challenge);
+
     } else {
+
       return res.sendStatus(403);
     }
   }
@@ -29,28 +35,33 @@ app.get("/webhook", (req, res) => {
 
 // RECEIVE EVENTS
 app.post("/webhook", async (req, res) => {
-  console.log("NEW FACEBOOK EVENT RECEIVED");
+
+  console.log("NEW FACEBOOK EVENT");
 
   try {
+
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
 
     console.log(value);
 
-    // NEW COMMENT DETECTED
+    // NEW COMMENT
     if (value?.item === "comment" && value?.verb === "add") {
 
-      const commentId = value.comment_id;
+      const parentId = value.parent_id;
 
-      console.log("COMMENT ID:", commentId);
+      console.log("PARENT ID:", parentId);
 
-      // SEND PRIVATE REPLY
+      // REPLY TO COMMENT
       const response = await axios.post(
-        `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
+
+        `https://graph.facebook.com/v25.0/${parentId}/comments`,
+
         {
           message: "Thanks for your comment ❤️"
         },
+
         {
           params: {
             access_token: PAGE_ACCESS_TOKEN
@@ -58,7 +69,7 @@ app.post("/webhook", async (req, res) => {
         }
       );
 
-      console.log("AUTO REPLY SENT");
+      console.log("REPLY SENT");
       console.log(response.data);
     }
 
@@ -81,5 +92,7 @@ app.post("/webhook", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
+
   console.log(`Server running on port ${PORT}`);
+
 });
