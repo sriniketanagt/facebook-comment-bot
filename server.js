@@ -20,11 +20,11 @@ app.get("/webhook", (req, res) => {
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
-  console.log("VERIFY WEBHOOK:", req.query);
+  console.log("VERIFY REQUEST:", req.query);
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
 
-    console.log("WEBHOOK VERIFIED SUCCESSFULLY");
+    console.log("WEBHOOK VERIFIED");
 
     return res.status(200).send(challenge);
   }
@@ -60,10 +60,10 @@ app.post("/webhook", async (req, res) => {
 
               console.log("COMMENT ID:", commentId);
 
-              console.log("SENDING PRIVATE REPLY...");
+              console.log("SENDING AUTO REPLY...");
 
               const response = await axios.post(
-                `https://graph.facebook.com/v25.0/${commentId}/private_replies`,
+                `https://graph.facebook.com/v25.0/${commentId}/comments`,
                 {
                   message: "Thank you for your comment ❤️"
                 },
@@ -74,9 +74,12 @@ app.post("/webhook", async (req, res) => {
                 }
               );
 
-              console.log("FACEBOOK RESPONSE:", response.data);
+              console.log(
+                "FACEBOOK RESPONSE:",
+                response.data
+              );
 
-              console.log("PRIVATE AUTO REPLY SENT");
+              console.log("AUTO REPLY SENT SUCCESSFULLY");
             }
           }
         }
@@ -87,12 +90,11 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
-    console.log("ERROR SENDING PRIVATE REPLY");
+    console.log("ERROR:");
 
     if (err.response) {
 
       console.log(
-        "FACEBOOK ERROR:",
         JSON.stringify(err.response.data, null, 2)
       );
 
