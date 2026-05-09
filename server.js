@@ -4,48 +4,52 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-const VERIFY_TOKEN = "sriniketan";
-const PAGE_ACCESS_TOKEN = "EAAX2v9peWNoBRYn01cWmKU3FpldaTOOWhswv2YNoUAww9ZB92DuJ9cEZBEZAE785eAQZBXXO0UA2jVfLNpZBdKamT4jRrn9E9ySZAbwCHDZCVFxTF3QMZBHHiG8LdZC45tSnZAG3MvS6LZA6snmnjygsbdT2Ek3gmL2gao0qvWemKZCrFOjLIetHZB83QMhyg8GfcZByw9lh9oWwZDZD";
+const VERIFY_TOKEN = "myverifytoken";
+
+const PAGE_ACCESS_TOKEN =
+"PASTE_YOUR_NEW_PAGE_ACCESS_TOKEN_HERE";
+
+app.get("/", (req, res) => {
+  res.send("Bot Running");
+});
 
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
+  console.log("VERIFY REQUEST:", req.query);
+
   if (mode && token === VERIFY_TOKEN) {
     console.log("WEBHOOK VERIFIED");
     return res.status(200).send(challenge);
   }
 
-  res.sendStatus(403);
+  return res.sendStatus(403);
 });
 
 app.post("/webhook", async (req, res) => {
+  console.log("NEW EVENT:", JSON.stringify(req.body, null, 2));
+
   try {
-    const body = req.body;
+    if (req.body.object === "page") {
+      for (const entry of req.body.entry) {
+        for (const change of entry.changes || []) {
 
-    console.log("NEW FACEBOOK EVENT RECEIVED");
-    console.log(JSON.stringify(body, null, 2));
-
-    if (body.entry) {
-      for (const entry of body.entry) {
-        if (entry.changes) {
-          for (const change of entry.changes) {
+          if (change.field === "feed") {
 
             const value = change.value;
 
-            if (value.item === "comment") {
+            if (value.item === "comment" && value.verb === "add") {
 
-              const postId = value.post_id;
-              const commentText = value.message || "";
+              const commentId = value.comment_id;
 
-              console.log("POST ID:", postId);
-              console.log("COMMENT:", commentText);
+              console.log("COMMENT ID:", commentId);
 
               await axios.post(
-                `https://graph.facebook.com/v25.0/${postId}/comments`,
+                `https://graph.facebook.com/v25.0/${commentId}/comments`,
                 {
-                  message: `Thanks for commenting 💛`
+                  message: "Thank you for your comment ❤️"
                 },
                 {
                   params: {
@@ -54,7 +58,7 @@ app.post("/webhook", async (req, res) => {
                 }
               );
 
-              console.log("REPLIED SUCCESSFULLY");
+              console.log("AUTO REPLIED");
             }
           }
         }
@@ -65,11 +69,13 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
     console.log("ERROR:");
-    console.log(err.response?.data || err.message);
+    console.log(err.response ? err.response.data : err.message);
     res.sendStatus(500);
   }
 });
 
-app.listen(process.env.PORT || 10000, () => {
-  console.log("Server running on port 10000");
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
