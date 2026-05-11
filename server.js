@@ -22,7 +22,7 @@ const repliedComments =
 app.get("/", (req, res) => {
 
   res.send(
-    "Facebook Comment Bot Running"
+    "Facebook Comment Reply Bot Running"
   );
 });
 
@@ -55,11 +55,11 @@ app.get("/webhook", (req, res) => {
 });
 
 async function sendCommentReply(
-  commentId
+  targetId
 ) {
 
   const url =
-    `https://graph.facebook.com/v25.0/${commentId}/comments`;
+    `https://graph.facebook.com/v25.0/${targetId}/comments`;
 
   return axios.post(
     url,
@@ -125,21 +125,21 @@ app.post(
             continue;
           }
 
-          const commentId =
-            value.comment_id;
+          const parentId =
+            value.parent_id;
 
-          if (!commentId) {
+          if (!parentId) {
             continue;
           }
 
           console.log(
-            "COMMENT ID:",
-            commentId
+            "PARENT ID:",
+            parentId
           );
 
           if (
             repliedComments.has(
-              commentId
+              parentId
             )
           ) {
 
@@ -156,11 +156,11 @@ app.post(
 
           const response =
             await sendCommentReply(
-              commentId
+              parentId
             );
 
           repliedComments.add(
-            commentId
+            parentId
           );
 
           console.log(
