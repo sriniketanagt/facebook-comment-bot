@@ -14,20 +14,22 @@ const PAGE_ACCESS_TOKEN =
   process.env.PAGE_ACCESS_TOKEN;
 
 const GRAPH_API_VERSION =
-  process.env.GRAPH_API_VERSION || "v25.0";
+  "v25.0";
 
 const PUBLIC_REPLY_MESSAGE =
-  process.env.PUBLIC_REPLY_MESSAGE ||
   "Thank you for your comment ❤️";
 
 const PORT =
   process.env.PORT || 10000;
 
-const repliedComments = new Set();
+const repliedComments =
+  new Set();
 
 app.get("/", (req, res) => {
 
-  res.send("Facebook Comment Bot Running");
+  res.send(
+    "Facebook Comment Bot Running"
+  );
 });
 
 app.get("/webhook", (req, res) => {
@@ -46,7 +48,9 @@ app.get("/webhook", (req, res) => {
     token === VERIFY_TOKEN
   ) {
 
-    console.log("WEBHOOK VERIFIED");
+    console.log(
+      "WEBHOOK VERIFIED"
+    );
 
     return res
       .status(200)
@@ -56,7 +60,9 @@ app.get("/webhook", (req, res) => {
   return res.sendStatus(403);
 });
 
-async function sendCommentReply(commentId) {
+async function sendCommentReply(
+  commentId
+) {
 
   const url =
     `https://graph.facebook.com/${GRAPH_API_VERSION}/${commentId}/comments`;
@@ -64,7 +70,8 @@ async function sendCommentReply(commentId) {
   return axios.post(
     url,
     {
-      message: PUBLIC_REPLY_MESSAGE
+      message:
+        PUBLIC_REPLY_MESSAGE
     },
     {
       params: {
@@ -75,119 +82,141 @@ async function sendCommentReply(commentId) {
   );
 }
 
-app.post("/webhook", async (req, res) => {
+app.post(
+  "/webhook",
+  async (req, res) => {
 
-  console.log(
-    "NEW FACEBOOK EVENT:",
-    JSON.stringify(
-      req.body,
-      null,
-      2
-    )
-  );
+    console.log(
+      "NEW FACEBOOK EVENT:",
+      JSON.stringify(
+        req.body,
+        null,
+        2
+      )
+    );
 
-  res.sendStatus(200);
+    res.sendStatus(200);
 
-  try {
+    try {
 
-    if (
-      req.body.object !== "page"
-    ) {
-      return;
-    }
-
-    for (
-      const entry of
-      req.body.entry || []
-    ) {
+      if (
+        req.body.object !== "page"
+      ) {
+        return;
+      }
 
       for (
-        const change of
-        entry.changes || []
+        const entry of
+        req.body.entry || []
       ) {
 
-        if (
-          change.field !== "feed"
+        for (
+          const change of
+          entry.changes || []
         ) {
-          continue;
-        }
 
-        const value =
-          change.value || {};
+          if (
+            change.field !== "feed"
+          ) {
+            continue;
+          }
 
-        if (
-          value.item !== "comment" ||
-          value.verb !== "add"
-        ) {
-          continue;
-        }
+          const value =
+            change.value || {};
 
-        const commentId =
-          value.comment_id;
+          if (
+            value.item !== "comment" ||
+            value.verb !== "add"
+          ) {
+            continue;
+          }
 
-        if (!commentId) {
-          continue;
-        }
+          let commentId =
+            value.comment_id;
 
-        if (
-          repliedComments.has(
-            commentId
-          )
-        ) {
+          if (!commentId) {
+            continue;
+          }
 
           console.log(
-            "ALREADY REPLIED"
-          );
-
-          continue;
-        }
-
-        console.log(
-          "REPLYING TO COMMENT:",
-          commentId
-        );
-
-        const response =
-          await sendCommentReply(
+            "FULL COMMENT ID:",
             commentId
           );
 
-        repliedComments.add(
-          commentId
-        );
+          // Extract actual comment ID
+          if (
+            commentId.includes("_")
+          ) {
+
+            commentId =
+              commentId
+                .split("_")[1];
+          }
+
+          console.log(
+            "FINAL COMMENT ID:",
+            commentId
+          );
+
+          if (
+            repliedComments.has(
+              commentId
+            )
+          ) {
+
+            console.log(
+              "ALREADY REPLIED"
+            );
+
+            continue;
+          }
+
+          console.log(
+            "REPLYING..."
+          );
+
+          const response =
+            await sendCommentReply(
+              commentId
+            );
+
+          repliedComments.add(
+            commentId
+          );
+
+          console.log(
+            "SUCCESS:",
+            response.data
+          );
+        }
+      }
+
+    } catch (err) {
+
+      console.log(
+        "ERROR SENDING REPLY"
+      );
+
+      if (err.response) {
 
         console.log(
-          "COMMENT REPLY SENT:",
-          response.data
+          "FACEBOOK ERROR:",
+          JSON.stringify(
+            err.response.data,
+            null,
+            2
+          )
+        );
+
+      } else {
+
+        console.log(
+          err.message
         );
       }
     }
-
-  } catch (err) {
-
-    console.log(
-      "ERROR SENDING REPLY"
-    );
-
-    if (err.response) {
-
-      console.log(
-        "FACEBOOK ERROR:",
-        JSON.stringify(
-          err.response.data,
-          null,
-          2
-        )
-      );
-
-    } else {
-
-      console.log(
-        err.message
-      );
-    }
   }
-});
+);
 
 app.listen(PORT, () => {
 
