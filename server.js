@@ -7,52 +7,69 @@ const app = express();
 
 app.use(express.json());
 
-const VERIFY_TOKEN = "myverifytoken";
+const VERIFY_TOKEN =
+  process.env.VERIFY_TOKEN || "myverifytoken";
 
-const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
+const PAGE_ACCESS_TOKEN =
+  process.env.PAGE_ACCESS_TOKEN;
 
-const GRAPH_API_VERSION = "v25.0";
+const GRAPH_API_VERSION =
+  process.env.GRAPH_API_VERSION || "v25.0";
 
-const PRIVATE_REPLY_MESSAGE =
+const PUBLIC_REPLY_MESSAGE =
+  process.env.PUBLIC_REPLY_MESSAGE ||
   "Thank you for your comment ❤️";
 
-const PORT = process.env.PORT || 10000;
+const PORT =
+  process.env.PORT || 10000;
 
 const repliedComments = new Set();
 
 app.get("/", (req, res) => {
-  res.send("Facebook Bot Running");
+
+  res.send("Facebook Comment Bot Running");
 });
 
 app.get("/webhook", (req, res) => {
 
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
+  const mode =
+    req.query["hub.mode"];
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+  const token =
+    req.query["hub.verify_token"];
+
+  const challenge =
+    req.query["hub.challenge"];
+
+  if (
+    mode === "subscribe" &&
+    token === VERIFY_TOKEN
+  ) {
 
     console.log("WEBHOOK VERIFIED");
 
-    return res.status(200).send(challenge);
+    return res
+      .status(200)
+      .send(challenge);
   }
 
   return res.sendStatus(403);
 });
 
-async function sendPrivateReply(commentId) {
+async function sendCommentReply(commentId) {
 
   const url =
-    `https://graph.facebook.com/${GRAPH_API_VERSION}/${commentId}/private_replies`;
+    `https://graph.facebook.com/${GRAPH_API_VERSION}/${commentId}/comments`;
 
   return axios.post(
     url,
     {
-      message: PRIVATE_REPLY_MESSAGE
+      message: PUBLIC_REPLY_MESSAGE
     },
     {
       params: {
-        access_token: PAGE_ACCESS_TOKEN
+        access_token:
+          PAGE_ACCESS_TOKEN
       }
     }
   );
@@ -62,26 +79,41 @@ app.post("/webhook", async (req, res) => {
 
   console.log(
     "NEW FACEBOOK EVENT:",
-    JSON.stringify(req.body, null, 2)
+    JSON.stringify(
+      req.body,
+      null,
+      2
+    )
   );
 
   res.sendStatus(200);
 
   try {
 
-    if (req.body.object !== "page") {
+    if (
+      req.body.object !== "page"
+    ) {
       return;
     }
 
-    for (const entry of req.body.entry || []) {
+    for (
+      const entry of
+      req.body.entry || []
+    ) {
 
-      for (const change of entry.changes || []) {
+      for (
+        const change of
+        entry.changes || []
+      ) {
 
-        if (change.field !== "feed") {
+        if (
+          change.field !== "feed"
+        ) {
           continue;
         }
 
-        const value = change.value || {};
+        const value =
+          change.value || {};
 
         if (
           value.item !== "comment" ||
@@ -90,31 +122,42 @@ app.post("/webhook", async (req, res) => {
           continue;
         }
 
-        const commentId = value.comment_id;
+        const commentId =
+          value.comment_id;
 
         if (!commentId) {
           continue;
         }
 
-        if (repliedComments.has(commentId)) {
+        if (
+          repliedComments.has(
+            commentId
+          )
+        ) {
 
-          console.log("ALREADY REPLIED");
+          console.log(
+            "ALREADY REPLIED"
+          );
 
           continue;
         }
 
         console.log(
-          "SENDING PRIVATE REPLY:",
+          "REPLYING TO COMMENT:",
           commentId
         );
 
         const response =
-          await sendPrivateReply(commentId);
+          await sendCommentReply(
+            commentId
+          );
 
-        repliedComments.add(commentId);
+        repliedComments.add(
+          commentId
+        );
 
         console.log(
-          "PRIVATE REPLY SENT:",
+          "COMMENT REPLY SENT:",
           response.data
         );
       }
@@ -122,7 +165,9 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
-    console.log("ERROR SENDING PRIVATE REPLY");
+    console.log(
+      "ERROR SENDING REPLY"
+    );
 
     if (err.response) {
 
@@ -137,7 +182,9 @@ app.post("/webhook", async (req, res) => {
 
     } else {
 
-      console.log(err.message);
+      console.log(
+        err.message
+      );
     }
   }
 });
